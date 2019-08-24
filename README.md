@@ -24,7 +24,7 @@ There are no data tables to lookup or online services required. The
 algorithm is publicly available and can be used without restriction.
 
 ### Author Notes
-This repository is the Magik implementation of google Open Location Code ( Plus Code ).
+This repository is the Magik implementation of Google's Open Location Code ( Plus Code ).
 
 
 
