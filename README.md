@@ -1,5 +1,5 @@
 # GE Smallworld Magik Implementation of Open-Location-Code
-=================
+
 
 ### Introduction
 
@@ -31,7 +31,8 @@ This repository is the Magik implementation of google Open Location Code ( Plus 
 ### Getting Started
 
 * Compile the Module
-* 
+* run below code
+
 ```
 _block 
 	_local oc << OpenLocationCode.new ( -37.797491 , 144.9581174 , 12 , _false   )
@@ -41,8 +42,18 @@ $
 
 ```
 
+### Author Notes
+* This repository is the Magik implementation of google Open Location Code ( Plus Code ).
+* This repository is under development.
+
 
 ### Authors
 
 * [**Sadeq Aramideh**](https://github.com/Aramideh)
+
+
+### License
+
+Please Contact the author for more information.
+
 
