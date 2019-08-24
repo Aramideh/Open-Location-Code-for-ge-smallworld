@@ -1,4 +1,4 @@
-# Smallworld Magik Implementation of Open-Location-Code
+# GE Smallworld Magik Implementation of Open-Location-Code
 ==================
 
 [![Build Status](https://api.travis-ci.org/google/open-location-code.svg?branch=master)](https://travis-ci.org/google/open-location-code)
