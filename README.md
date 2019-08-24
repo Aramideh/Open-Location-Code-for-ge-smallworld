@@ -35,7 +35,7 @@ This repository is the Magik implementation of google Open Location Code ( Plus 
 
 ```
 _block 
-	_local oc << OpenLocationCode.new ( -37.797491 , 144.9581174 , 12 , _false   )
+	_local oc << OpenLocationCode.new ( -37.797491 , 144.9581174 , 10 , _false   )
 	write ( oc.get_code())
 _endblock 
 $
