@@ -413,12 +413,3 @@ _private _method OpenLocationCode.isPadded? ( code )
 	
 _endmethod 
 $
-
-
-  
-
-_block 
-	_local oc << OpenLocationCode.new ( -37.797491 , 144.9581174 , 10  ,_unset    )
-	write ( oc.getCode())
-_endblock 
-$
