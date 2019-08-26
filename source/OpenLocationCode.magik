@@ -404,48 +404,6 @@ _private _method OpenLocationCode.isPadded? ( code )
 _endmethod 
 $
 
-#
-#_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
-#_method  OpenLocationCode.shorten( referenceLatitude, referenceLongitude)
-#	
-#	_if ~referenceLatitude.is_kind_of?( number_mixin )
-#	_then 
-#		condition.raise(:illegal_value, :variable_name, "referenceLatitude",:variable_value ,variable_value ,:correct_type , "float or integer" )
-#	_elif ~referenceLongitude.is_kind_of?( number_mixin )
-#	_then
-#		condition.raise(:illegal_value, :variable_name, "referenceLongitude",:variable_value ,variable_value ,:correct_type , "float or integer" ) 	
-#	_endif 
-#	
-#	
-#	
-#	_if ~_self.isFull?
-#	_then  condition.raise(:shorten_illegal_state)
-#	_endif 	
-#	
-#	_if _self.isPadded?
-#	_then  condition.raise(:padded_illegal_state)
-#	_endif 		
-#	
-#
-#    CodeArea codeArea = decode();
-#    double range =
-#        Math.max(
-#            Math.abs(referenceLatitude - codeArea.getCenterLatitude()),
-#            Math.abs(referenceLongitude - codeArea.getCenterLongitude()));
-#    // We are going to check to see if we can remove three pairs, two pairs or just one pair of
-#    // digits from the code.
-#    for (int i = 4; i >= 1; i--) {
-#      // Check if we're close enough to shorten. The range must be less than 1/2
-#      // the precision to shorten at all, and we want to allow some safety, so
-#      // use 0.3 instead of 0.5 as a multiplier.
-#      if (range < (computeLatitudePrecision(i * 2) * 0.3)) {
-#        // We're done.
-#        return new OpenLocationCode(code.substring(i * 2));
-#      }
-#    }
-#    throw new IllegalArgumentException(
-#        "Reference location is too far from the Open Location Code center.");
-#  }
 
   
 _pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})  
