@@ -448,7 +448,7 @@ $
 #  }
 
   
-  
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})  
 _method  OpenLocationCode.decode(_optional code)
 
    ##
@@ -535,6 +535,7 @@ _method  OpenLocationCode.decode(_optional code)
 _endmethod 
 $
 
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
 _method  OpenLocationCode.getCenterLatitude( _optional bbox)
 	_dynamic !print_float_precision! << 10
 	bbox << bbox.default(.bbox)
@@ -542,20 +543,14 @@ _method  OpenLocationCode.getCenterLatitude( _optional bbox)
 _endmethod 
 $
 
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
 _method  OpenLocationCode.getCenterLongitude( _optional bbox)
 	_dynamic !print_float_precision! << 10
 	bbox << bbox.default(.bbox)
 	_return ( (bbox.bottom_left.x +bbox.top_right.x)/ 2).as_float 
 _endmethod 
 $
-
-
-
-_block 
-	_local oc << OpenLocationCode.new ( -37.697491 , 144.9581174 , 10  , _true    )
-	#_local oc << OpenLocationCode.new ( -16.64487500 ,	166.0106250	 , 10  , _true    )
-	
-	write ( oc.getCode())
-	bbox << OpenLocationCode.decode(oc.getCode())
-_endblock 
 $
+$
+$
+
