@@ -1,0 +1,561 @@
+ # S a d e q    A r a m i d e h 
+ #    sadegh.a@gmail.com
+
+remex(:OpenLocationCode)
+$
+
+def_slotted_exemplar(:OpenLocationCode,
+					{
+					  {:code,_unset,:writable},
+					  {:latitude,_unset,:writable},
+					  {:longitude,_unset,:writable},
+					  {:codeLength,_unset,:writable},
+					  {:bbox,_unset,:writable},
+					  {:debug?,_unset,:writable}					  
+					},  
+                    {} ) 
+$
+
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+## Provides a normal precision code, approximately 14x14 meters.
+OpenLocationCode.define_shared_constant ( :CODE_PRECISION_NORMAL, 10 , _false )
+$
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+## The character set used to encode the values.
+OpenLocationCode.define_shared_constant ( :CODE_ALPHABET, "23456789CFGHJMPQRVWX" , _false )
+$
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+## A separator used to break the code into two parts to aid memorability.
+OpenLocationCode.define_shared_constant ( :SEPARATOR, %+ , _false )
+$
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+##  The character used to pad codes.
+OpenLocationCode.define_shared_constant ( :PADDING_CHARACTER, %0 , _false )
+$
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+##  The number of characters to place before the separator.
+OpenLocationCode.define_shared_constant ( :SEPARATOR_POSITION, 9  , _false )
+$
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+##  The max number of digits to process in a plus code.
+OpenLocationCode.define_shared_constant ( :MAX_DIGIT_COUNT,  15 , _false )
+$
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+##  Maximum code length using just lat/lng pair encoding.
+OpenLocationCode.define_shared_constant ( :PAIR_CODE_LENGTH, 10  , _false )
+$
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+##  Number of digits in the grid coding section.
+OpenLocationCode.define_shared_constant ( :GRID_CODE_LENGTH, OpenLocationCode.MAX_DIGIT_COUNT - OpenLocationCode.PAIR_CODE_LENGTH , _false )
+$
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+##  The base to use to convert numbers to/from.
+OpenLocationCode.define_shared_constant ( :ENCODING_BASE, OpenLocationCode.CODE_ALPHABET.size , _false )
+$
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+##  The maximum value for latitude in degrees.
+OpenLocationCode.define_shared_constant ( :LATITUDE_MAX, 90 , _false )
+$
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+##   The maximum value for longitude in degrees.
+OpenLocationCode.define_shared_constant ( :LONGITUDE_MAX, 180 , _false )
+$
+
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+##  Number of columns in the grid refinement method.
+OpenLocationCode.define_shared_constant ( :GRID_COLUMNS, 4 , _false )
+$
+
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+##  Number of rows in the grid refinement method.
+OpenLocationCode.define_shared_constant ( :GRID_ROWS, 5 , _false )
+$
+
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+## Value to multiple latitude degrees to convert it to an integer with the maximum encoding
+## precision. I.e. ENCODING_BASE**3 * GRID_ROWS**GRID_CODE_LENGTH
+OpenLocationCode.define_shared_constant ( :LAT_INTEGER_MULTIPLIER, 8000 * 3125, _false )
+$
+
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+## Value to multiple longitude degrees to convert it to an integer with the maximum encoding
+## precision. I.e. ENCODING_BASE**3 * GRID_COLUMNS**GRID_CODE_LENGTH
+OpenLocationCode.define_shared_constant ( :LNG_INTEGER_MULTIPLIER, 8000 * 1024, _false )
+$
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+## Value of the most significant latitude digit after it has been converted to an integer.
+OpenLocationCode.define_shared_constant ( :LAT_MSP_VALUE, OpenLocationCode.LAT_INTEGER_MULTIPLIER * OpenLocationCode.ENCODING_BASE * OpenLocationCode.ENCODING_BASE, _false )
+$
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+## Value of the most significant longitude digit after it has been converted to an integer.
+OpenLocationCode.define_shared_constant ( :LNG_MSP_VALUE, OpenLocationCode.LNG_INTEGER_MULTIPLIER * OpenLocationCode.ENCODING_BASE * OpenLocationCode.ENCODING_BASE, _false )
+$
+
+
+condition.define_condition (:illegal_code_length, :error,
+			   {:length},
+			   "code length of #1 is illigal, please try another length")
+
+$
+
+condition.define_condition (:illegal_value, :error,
+			   {:variable_name , :variable_value ,:correct_type},
+			   "#1 with value of #2 is illigal please provide a value of type #3" )
+
+$
+
+condition.define_condition (:shorten_illegal_state, :error,
+			   {},
+			   "shorten method could only be called on a full code" )
+
+$
+
+condition.define_condition (:padded_illegal_state, :error,
+			   {},
+			   "shorten method can not be called on a padded code" )
+
+$
+
+condition.define_condition (:undefined_condition, :error,
+			   {:explain},
+			   "#1" )
+
+$
+
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+_method OpenLocationCode.new ( latitude , longitude , _optional codeLength , debug?)
+
+	 _self.latitude << latitude
+	 _self.longitude << longitude
+	 _self.codeLength << codeLength.default(_self.CODE_PRECISION_NORMAL)
+	 _self.debug? << debug?.default(_false) 
+	 
+     >> _clone.init() 
+_endmethod 
+$
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+_private _method OpenLocationCode.init() 
+		
+        >> _self 
+_endmethod 
+$
+
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+_method OpenLocationCode.encode( latitude, longitude, _optional codeLength )
+## Encodes latitude/longitude into 10 digit Open Location Code. This method is equivalent to
+## creating the OpenLocationCode object and getting the code from it.
+	_return OpenLocationCode.new ( latitude , longitude , codeLength).getCode()
+_endmethod 
+$
+
+
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+_method  OpenLocationCode.getCode()
+	
+	
+	 _dynamic !print_float_precision! << 10
+	 
+    # Limit the maximum number of digits in the code.
+    _self.codeLength << min( _self.codeLength, _self.MAX_DIGIT_COUNT);
+	
+    # Check that the code length requested is valid.
+    _if _self.codeLength < _self.PAIR_CODE_LENGTH
+	_then 
+		condition.raise(:illegal_code_length, :length, _self.codeLength)
+    _endif 
+	
+    # Ensure that latitude and longitude are valid.
+    _self.latitude << _self.clipLatitude(_self.latitude);
+    _self.longitude << _self.normalizeLongitude( _self.longitude);
+
+	
+    # Latitude 90 needs to be adjusted to be just less, so the returned code can also be decoded.
+    _if  (_self.latitude < _self.LATITUDE_MAX) 
+	_then 
+      _self.latitude << _self.latitude - 0.9 * _self.computeLatitudePrecision( _self.codeLength);
+    _endif 
+
+    # Store the code - we build it in reverse and reorder it afterwards.
+    _local revCodeBuilder << ""
+
+    # Compute the code.
+    # Multiply values by their precision and convert to positive. Rounding
+    # avoids/minimises errors due to floating point precision.
+    latVal << (( (_self.latitude + _self.LATITUDE_MAX) * _self.LAT_INTEGER_MULTIPLIER * 10**6).rounded / 10**6).as_float
+    lngVal << (( (_self.longitude + _self.LONGITUDE_MAX) * _self.LNG_INTEGER_MULTIPLIER * 10**6).rounded / 10**6).as_float
+
+
+    # Compute the grid part of the code if necessary.
+	_local latDigit , lngDigit ,ndx
+	
+	
+    _if  (_self.codeLength > _self.PAIR_CODE_LENGTH)
+	_then 
+	
+      _for i _over 1.upto( _self.GRID_CODE_LENGTH)
+	  _loop
+	  
+    	     latDigit << latVal.rounded _mod  _self.GRID_ROWS;
+        	 lngDigit << lngVal.rounded _mod  _self.GRID_COLUMNS;		
+            ndx << (latDigit * _self.GRID_COLUMNS + lngDigit) 
+			
+    		_if ndx = 0
+    		_then 
+    			ndx << _self.CODE_ALPHABET.size
+    		_endif
+			 	
+			revCodeBuilder +<< _self.CODE_ALPHABET[ndx] 	 
+						
+            latVal << (latVal / _self.GRID_ROWS).as_float
+            lngVal << (lngVal / _self.GRID_COLUMNS).as_float
+			
+      _endloop 
+	  
+	  
+    _else
+	
+          latVal << (latVal / (_self.GRID_ROWS ** _self.GRID_CODE_LENGTH)).as_float
+          lngVal << (lngVal / (_self.GRID_COLUMNS **  _self.GRID_CODE_LENGTH )).as_float
+		  
+    _endif 
+	
+
+	
+    # Compute the pair section of the code.
+	
+    _for i _over 1.upto( _self.PAIR_CODE_LENGTH _div  2 )
+	_loop 
+		 ndx << _if ( lngVal.ceiling _mod  _self.ENCODING_BASE ).rounded  = 0
+		 		_then 
+					>>  _self.CODE_ALPHABET.size
+				_else 
+					>> (lngVal.ceiling _mod  _self.ENCODING_BASE ).rounded 
+				_endif 	
+				
+	      revCodeBuilder +<< _self.CODE_ALPHABET[ ndx ].write_string
+		 
+		  
+		 ndx << _if ( latVal.ceiling _mod  _self.ENCODING_BASE ).rounded   = 0
+		 		_then 
+					>>  _self.CODE_ALPHABET.size
+				_else 
+					>> ( latVal.ceiling _mod  _self.ENCODING_BASE ).rounded 
+				_endif 			  
+		  		 
+		  
+    	  revCodeBuilder +<< _self.CODE_ALPHABET[ ndx ] .write_string		   
+          latVal << (latVal / _self.ENCODING_BASE).as_float 
+          lngVal << (lngVal / _self.ENCODING_BASE).as_float
+	  
+	      # If we are at the separator position, add the separator.
+          _if  (i = 1)
+    	  _then 
+              revCodeBuilder +<< _self.SEPARATOR
+          _endif 
+    	  
+    _endloop 
+	
+   # Reverse the code.
+    code << revCodeBuilder.reversed()
+
+    # If we need to pad the code, replace some of the digits.
+    _if  (_self.codeLength < _self.SEPARATOR_POSITION )
+	_then 
+       _for i _over _self.codeLenght.upto( _self.SEPARATOR_POSITION-1)
+	   _loop 
+	        code[i] << _self.PADDING_CHARACTER
+		_endloop 
+      
+    _endif 
+	
+	
+	.code << code.subseq0(0, max(_self.SEPARATOR_POSITION, _self.codeLength) +1) .write_string
+	
+	_return .code
+	
+_endmethod 
+$
+
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+ _private _method OpenLocationCode.clipLatitude( latitude ) 
+   _return min( max(latitude, -1 * _self.LATITUDE_MAX), _self.LATITUDE_MAX)
+_endmethod 
+$
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+_private _method OpenLocationCode.normalizeLongitude( longitude )
+	_loop 
+		_if longitude < -1 * _self.LONGITUDE_MAX
+		_then 
+			longitude << longitude + _self.LONGITUDE_MAX * 2
+		_else 
+			_leave 	
+		_endif 
+	_endloop 
+	
+	_loop 
+		_if longitude >= _self.LONGITUDE_MAX 
+		_then 
+			longitude << longitude - _self.LONGITUDE_MAX * 2
+		_else 
+			_leave 	
+		_endif 	
+	_endloop
+	 
+    _return  longitude
+	
+_endmethod 
+$
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+_private _method  OpenLocationCode.computeLatitudePrecision( codeLength )
+#	
+#    _if  codeLength <= _self.CODE_PRECISION_NORMAL
+#	_then 
+#		_return  (_self.ENCODING_BASE ** ( (codeLength / -2) + 2)).as_float
+#    _endif 
+	
+    _return ((_self.ENCODING_BASE** -3) / (_self.GRID_ROWS ** codeLength - _self.PAIR_CODE_LENGTH)).as_float
+	
+_endmethod 
+$
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+_private _method OpenLocationCode.isFull?
+	##Returns whether this is a full Open Location Code.
+	
+    _return .code[ _self.SEPARATOR_POSITION] = _self.SEPARATOR
+	
+_endmethod 
+$
+
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+_private _method OpenLocationCode.isFull? ( code )
+	## Returns whether this is a full Open Location Code.
+	
+    _return code[ _self.SEPARATOR_POSITION] = _self.SEPARATOR
+	
+_endmethod 
+$
+
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+_private _method OpenLocationCode.isShort?
+	## Returns whether the provided Open Location Code is a short Open Location Code.
+
+    _return .code.index_of(_self.SEPARATOR ) >= 0 _andif  .code.index_of(_self.SEPARATOR) < _self.SEPARATOR_POSITION
+	
+_endmethod 
+$
+
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+_private _method OpenLocationCode.isShort? ( code )
+	## Returns whether the provided Open Location Code is a short Open Location Code.
+
+    _return code.index_of(_self.SEPARATOR ) >= 0 _andif  code.index_of(_self.SEPARATOR) < _self.SEPARATOR_POSITION
+	
+_endmethod 
+$
+
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+_private _method OpenLocationCode.isPadded?
+	##  Returns whether this {@link OpenLocationCode} is a padded Open Location Code, meaning that it
+	##  contains less than 8 valid digits.
+
+    _return .code.index_of(_self.PADDING_CHARACTER ) >= 0
+	
+_endmethod 
+$
+
+
+
+_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+_private _method OpenLocationCode.isPadded? ( code )
+	##  Returns whether this {@link OpenLocationCode} is a padded Open Location Code, meaning that it
+	##  contains less than 8 valid digits.
+
+    _return code.index_of(_self.PADDING_CHARACTER ) >= 0
+	
+_endmethod 
+$
+
+#
+#_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
+#_method  OpenLocationCode.shorten( referenceLatitude, referenceLongitude)
+#	
+#	_if ~referenceLatitude.is_kind_of?( number_mixin )
+#	_then 
+#		condition.raise(:illegal_value, :variable_name, "referenceLatitude",:variable_value ,variable_value ,:correct_type , "float or integer" )
+#	_elif ~referenceLongitude.is_kind_of?( number_mixin )
+#	_then
+#		condition.raise(:illegal_value, :variable_name, "referenceLongitude",:variable_value ,variable_value ,:correct_type , "float or integer" ) 	
+#	_endif 
+#	
+#	
+#	
+#	_if ~_self.isFull?
+#	_then  condition.raise(:shorten_illegal_state)
+#	_endif 	
+#	
+#	_if _self.isPadded?
+#	_then  condition.raise(:padded_illegal_state)
+#	_endif 		
+#	
+#
+#    CodeArea codeArea = decode();
+#    double range =
+#        Math.max(
+#            Math.abs(referenceLatitude - codeArea.getCenterLatitude()),
+#            Math.abs(referenceLongitude - codeArea.getCenterLongitude()));
+#    // We are going to check to see if we can remove three pairs, two pairs or just one pair of
+#    // digits from the code.
+#    for (int i = 4; i >= 1; i--) {
+#      // Check if we're close enough to shorten. The range must be less than 1/2
+#      // the precision to shorten at all, and we want to allow some safety, so
+#      // use 0.3 instead of 0.5 as a multiplier.
+#      if (range < (computeLatitudePrecision(i * 2) * 0.3)) {
+#        // We're done.
+#        return new OpenLocationCode(code.substring(i * 2));
+#      }
+#    }
+#    throw new IllegalArgumentException(
+#        "Reference location is too far from the Open Location Code center.");
+#  }
+
+  
+  
+_method  OpenLocationCode.decode(_optional code)
+
+   ##
+   ## Decodes object into coordinate object
+   ##
+   
+    _dynamic !print_float_precision! << 10
+   
+   
+   code << code.default(.code)
+   
+   _if code _is _unset 
+   _then 
+   		condition.raise(:undefined_condition, :explain , "code is null")
+   _endif 
+   
+   _if ~_self.isFull?( code )
+   _then 
+   		condition.raise(:undefined_condition, :explain , "Method decode() could only be called on valid full codes")
+	_endif 
+		
+
+    # Strip padding and separator characters out of the code.
+   code << 
+        code.substitute_string(_self.SEPARATOR , "").substitute_string(_self.PADDING_CHARACTER , "")
+
+	_if .debug?
+	_then 
+		write("clean code is ",%tab , code )
+	_endif 	
+		
+    # Initialise the values. We work them out as integers and convert them to doubles at the end.
+	
+    
+	 latPrecision << _self.ENCODING_BASE * _self.ENCODING_BASE
+	 lngPrecision << _self.ENCODING_BASE * _self.ENCODING_BASE
+	 digit << 0
+	 southLatitude << 0
+	 westLongitude << 0
+	# Decode the digits.
+    _loop
+		_if digit >  code.size  _then _leave _endif 
+         _if (digit < _self.PAIR_CODE_LENGTH)
+		 _then 
+              # Decode a pair of digits, the first being latitude and the second being longitude.
+			  digit +<< 2
+              latPrecision << latPrecision / _self.ENCODING_BASE
+              lngPrecision << lngPrecision / _self.ENCODING_BASE
+              digitVal << _self.CODE_ALPHABET.index_of( code[digit-1] ) -1
+              southLatitude +<< latPrecision * digitVal
+              digitVal << _self.CODE_ALPHABET.index_of( code[digit] )
+              westLongitude +<< lngPrecision * digitVal
+              
+		   _else 
+              # Use the 4x5 grid for digits after 10.
+			   digit +<< 1
+              digitVal << _self.CODE_ALPHABET.index_of( code[digit-1] )-1
+              row << (digitVal / _self.GRID_COLUMNS).rounded
+              col << (digitVal _mod  _self.GRID_COLUMNS).rounded
+              latPrecision << latPrecision / _self.GRID_ROWS
+              lngPrecision << lngPrecision / _self.GRID_COLUMNS
+              southLatitude +<< latPrecision * row
+              westLongitude +<< lngPrecision * col
+             
+         
+       		_endif 
+	
+	 _endloop 		
+			
+		#write( (southLatitude-_self.LATITUDE_MAX).as_float ,%tab, (westLongitude - _self.LONGITUDE_MAX).as_float ,%tab,  (southLatitude-_self.LATITUDE_MAX+latPrecision).as_float ,%tab, (westLongitude - _self.LONGITUDE_MAX + lngPrecision).as_float )
+
+	.bbox << bounding_box.new (	
+								(westLongitude - _self.LONGITUDE_MAX).as_float ,  	
+                				(southLatitude-_self.LATITUDE_MAX).as_float , 
+                				(westLongitude - _self.LONGITUDE_MAX + lngPrecision).as_float ,
+                				(southLatitude-_self.LATITUDE_MAX+latPrecision).as_float 
+							  )
+			
+	
+	_return .bbox
+			
+		
+		  
+_endmethod 
+$
+
+_method  OpenLocationCode.getCenterLatitude( _optional bbox)
+	_dynamic !print_float_precision! << 10
+	bbox << bbox.default(.bbox)
+	_return ( (bbox.bottom_left.y +bbox.top_right.y)/ 2).as_float 
+_endmethod 
+$
+
+_method  OpenLocationCode.getCenterLongitude( _optional bbox)
+	_dynamic !print_float_precision! << 10
+	bbox << bbox.default(.bbox)
+	_return ( (bbox.bottom_left.x +bbox.top_right.x)/ 2).as_float 
+_endmethod 
+$
+
+
+
+_block 
+	_local oc << OpenLocationCode.new ( -37.697491 , 144.9581174 , 10  , _true    )
+	#_local oc << OpenLocationCode.new ( -16.64487500 ,	166.0106250	 , 10  , _true    )
+	
+	write ( oc.getCode())
+	bbox << OpenLocationCode.decode(oc.getCode())
+_endblock 
+$
