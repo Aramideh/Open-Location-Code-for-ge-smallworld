@@ -44,6 +44,8 @@ _block
 _endblock 
 $
 
+result:=> 4RJ66X35+26
+
 ```
 
 ##### Decoding
@@ -57,6 +59,10 @@ _block
 	write ( "Longitude:",%tab, OpenLocationCode.getCenterLongitude(bbox))
 _endblock 
 $
+
+results:=>
+Latitude:	-37.69746250
+Longitude:	144.9580156
 
 ```
 
