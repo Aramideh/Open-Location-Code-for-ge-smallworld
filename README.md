@@ -36,8 +36,6 @@ This repository is the Magik implementation of Google's Open Location Code ( Plu
 
 ##### Encoding
 ```
-Using method OpenLocationCode.new ( latitude , longitude , _optional codeLength , debug?)
-
 for Example :
 
 _block 
@@ -50,7 +48,6 @@ $
 
 ##### Decoding
 ```
-using method OpenLocationCode.decode(code)
 for Example:
 
 _block 
