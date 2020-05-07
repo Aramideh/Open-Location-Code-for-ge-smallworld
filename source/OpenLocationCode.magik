@@ -127,40 +127,6 @@ _endmethod
 $
 
 
-#_pragma(classify_level=basic, topic={OpenLocationCode}, usage={external})
-#_method OpenLocationCode.new ( latitude , longitude , _optional codeLength , debug?)
-#	
-#	>> _self #_clone.init( latitude , longitude , codeLength , debug? )
-#	
-#_endmethod 
-#$
-
-#_pragma(classify_level=advanced, topic={OpenLocationCode}, usage={internal})
-#_private _method OpenLocationCode.init() 
-#	
-#	
-#	_if latitude _is _unset _orif longitude _is _unset
-#	_then
-#		condition.raise(:lat_lon_unset)
-#	_endif
-#	
-#	_self.latitude << latitude
-#	_self.longitude << longitude
-#
-#	# Check that the code length requested is valid.
-#	_if (_self.codeLength << codeLength.default(_self.CODE_PRECISION_NORMAL)) < _self.CODE_PRECISION_NORMAL
-#	_then
-#		condition.raise(:illegal_code_length, :length, _self.codeLength)
-#	_endif 
-#	
-#	_self.debug? << debug?.default(_false) 
-#	
-#	>> _self
-#	
-#_endmethod 
-#$
-
-
 _pragma(classify_level=basic, topic={OpenLocationCode}, usage={external})
 _method OpenLocationCode.encode( latitude, longitude)
 	## Encodes latitude/longitude into 10 digit Open Location Code. This method is equivalent to
