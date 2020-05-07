@@ -1,0 +1,55 @@
+#% text_encoding = cp1256
+
+_package user
+
+
+condition.define_condition (:lat_lon_unset, :error,
+			   {},
+			   "Longitude and Latitude is not provided")
+
+$
+
+condition.define_condition (:bbox_unset, :error,
+			   {},
+			   "Goodle plus code bounding box is unset")
+
+$
+
+
+condition.define_condition (:illegal_code_length, :error,
+			   {:length},
+			   "code length of #1 is illigal, please try another length")
+
+$
+
+condition.define_condition (:illegal_value, :error,
+			   {:variable_name , :variable_value ,:correct_type},
+			   "#1 with value of #2 is illegal please provide a value of type #3" )
+
+$
+
+condition.define_condition (:shorten_illegal_state, :error,
+			   {},
+			   "shorten method could only be called on a full code" )
+
+$
+
+condition.define_condition (:padded_illegal_state, :error,
+			   {},
+			   "shorten method can not be called on a padded code" )
+
+$
+
+condition.define_condition (:undefined_condition, :error,
+			   {:explain},
+			   "#1" )
+
+$
+
+
+condition.define_condition (:google_plus_code_is_unset, :error,
+			   {},
+			   "Google plus code is unset" )
+
+$
+

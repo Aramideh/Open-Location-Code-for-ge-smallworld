@@ -41,8 +41,8 @@ Using method OpenLocationCode.new ( latitude , longitude , _optional codeLength 
 for Example :
 
 _block 
-	_local oc << OpenLocationCode.new ( -37.797491 , 144.9581174 , 10 , _false   )
-	write ( oc.get_code())
+	_local oc << OpenLocationCode.new ()
+	write ( oc.encode( -37.797491 , 144.9581174) )
 _endblock 
 $
 
@@ -50,10 +50,11 @@ $
 
 ##### Decoding
 ```
-using method OpenLocationCode.decode(_optional code)
+using method OpenLocationCode.decode(code)
 for Example:
 
 _block 
+	_dynamic !print_float_precision! << 10
 	_local bbox << OpenLocationCode.decode( "4RJ68X35+26" )
 	write ( "Latitude:",%tab, OpenLocationCode.getCenterLatitude(bbox))
 	write ( "Longitude:",%tab, OpenLocationCode.getCenterLongitude(bbox))
