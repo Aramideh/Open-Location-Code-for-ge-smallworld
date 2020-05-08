@@ -39,8 +39,7 @@ This repository is the Magik implementation of Google's Open Location Code ( Plu
 for Example :
 
 _block 
-	_local oc << OpenLocationCode.new ()
-	write ( oc.encode( -37.797491 , 144.9581174) )
+	write ( OpenLocationCode.encode( -37.797491 , 144.9581174) )
 _endblock 
 $
 
@@ -57,7 +56,7 @@ _block
 	_local bbox << OpenLocationCode.decode( "4RJ68X35+26" )
 	write ( "Latitude:",%tab, OpenLocationCode.getCenterLatitude(bbox))
 	write ( "Longitude:",%tab, OpenLocationCode.getCenterLongitude(bbox))
-_endblock 
+_endblock
 $
 
 results:=>
