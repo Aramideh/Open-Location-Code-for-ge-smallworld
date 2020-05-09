@@ -305,8 +305,8 @@ _private _method  OpenLocationCode.computeLatitudePrecision( codeLength )
 _endmethod 
 $
 
-_pragma(classify_level=restricted, topic={OpenLocationCode}, usage={internal})
-_private _method OpenLocationCode.isFull? ( code )
+_pragma(classify_level=restricted, topic={OpenLocationCode}, usage={external})
+_method OpenLocationCode.isFull? ( code )
 	## Returns whether this is a full Open Location Code.
 
 	_if code _is _unset
@@ -320,8 +320,8 @@ _endmethod
 $
 
 
-_pragma(classify_level=restricted, topic={OpenLocationCode}, usage={internal})
-_private _method OpenLocationCode.isShort? ( code )
+_pragma(classify_level=restricted, topic={OpenLocationCode}, usage={external})
+_method OpenLocationCode.isShort? ( code )
 	## Returns whether the provided Open Location Code is a short Open Location Code.
 	
 	_if code _is _unset
@@ -386,13 +386,12 @@ _private _method OpenLocationCode.decodePlusCodeToLongitudeLatitude( code )
 	# Strip padding and separator characters out of the code.
 	_local code << code.substitute_string(_self.SEPARATOR , "").substitute_string(_self.PADDING_CHARACTER , "")
 	
-	_if .debug?
+	_if .debug?.default(_false)
 	_then 
 		write("clean code is ",%tab , code )
 	_endif 	
 	
 	# Initialise the values. We work them out as integers and convert them to doubles at the end.
-	
 	
 	_local latPrecision << _self.ENCODING_BASE * _self.ENCODING_BASE
 	_local lngPrecision << _self.ENCODING_BASE * _self.ENCODING_BASE
@@ -401,7 +400,7 @@ _private _method OpenLocationCode.decodePlusCodeToLongitudeLatitude( code )
 	_local westLongitude << 0
 	# Decode the digits.
 	_loop
-		_if digit >  code.size  _then _leave _endif 
+		_if digit > code.size  _then _leave _endif 
 		_if (digit < _self.PAIR_CODE_LENGTH)
 		_then 
 			# Decode a pair of digits, the first being latitude and the second being longitude.
@@ -414,17 +413,15 @@ _private _method OpenLocationCode.decodePlusCodeToLongitudeLatitude( code )
 			westLongitude +<< lngPrecision * digitVal
 			
 		_else 
-			# Use the 4x5 grid for digits after 10.
-			digit +<< 1
+			# Use the 4x5 grid for digits after 10.			
 			digitVal << _self.CODE_ALPHABET.index_of( code[digit-1] )-1
-			row << (digitVal / _self.GRID_COLUMNS).rounded
-			col << (digitVal _mod  _self.GRID_COLUMNS).rounded
-			latPrecision << latPrecision / _self.GRID_ROWS
-			lngPrecision << lngPrecision / _self.GRID_COLUMNS
+			row << (digitVal / _self.GRID_COLUMNS).ceiling
+			col << (digitVal _mod  _self.GRID_COLUMNS).ceiling
+			latPrecision << (latPrecision / _self.GRID_ROWS).as_float
+			lngPrecision << (lngPrecision / _self.GRID_COLUMNS).as_float
 			southLatitude +<< latPrecision * row
-			westLongitude +<< lngPrecision * col
-			
-			
+			westLongitude +<< lngPrecision * col			
+			digit +<< 1
        		_endif 
 		
 	_endloop 		
